@@ -1,0 +1,9 @@
+{
+  server_port:3000,
+  db_host: "localhost",
+  db_user: "<replacewithdbusername>",
+  db_password: "<replacewithdbpassword>",
+  db_database: "nodesessions",
+  db_port: "27017",
+  session_secret: "<replacewithsomesessionsecret>"
+}

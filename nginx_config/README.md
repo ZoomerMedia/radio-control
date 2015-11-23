@@ -1,0 +1,1 @@
+#This would typically go in /etc/nginx/conf.d

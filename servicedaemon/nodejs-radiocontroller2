@@ -1,0 +1,63 @@
+#!/bin/sh
+# chkconfig: 2345 86 85
+#  @file nodejs-radiocontroller
+#  
+#  description:
+#  this is a nodejs app that sends out socketio messages to connected radio players. It has a seperate channel for each station at zoomermedia
+#  radio players subscribe to a channel, and then receive regular updates, when info changes, such as the name of the song that is playing
+#  
+#  also ... this nodejs service runs on port 3000 or something, but nginx listens on port 80 and routes calls to this as an upstream source
+#  also ... forever keeps this running. there is a service that stops and starts forvever which runs this
+#  also ... clustering? more than 1 nodejs service doing this job?
+#  
+. /etc/rc.d/init.d/functions
+
+USER="zwebnode"
+ 
+DAEMON="/usr/local/bin/forever" #run forever, which will in turn run node
+ROOT_DIR="/home/zwebnode/nodejs/radio-server"
+ 
+SERVER="$ROOT_DIR/app_rv.js"
+LOG_FILE="$ROOT_DIR/app_rv.js.log"
+ 
+LOCK_FILE="/var/lock/subsys/nodejs-radiocontroller2"
+ 
+do_start()
+{
+        if [ ! -f "$LOCK_FILE" ] ; then
+                echo -n $"Starting $SERVER: "
+                runuser -l "$USER" -c "$DAEMON start $SERVER >> $LOG_FILE &" && echo_success || echo_failure
+                RETVAL=$?
+                echo
+                [ $RETVAL -eq 0 ] && touch $LOCK_FILE
+        else
+                echo "$SERVER is locked."
+                RETVAL=1
+        fi
+}
+do_stop()
+{
+        echo -n $"Stopping forever $SERVER: "
+        runuser -l "$USER" -c "$DAEMON stop $SERVER >> $LOG_FILE &" && echo_success || echo_failure
+        RETVAL=$?
+        echo
+        [ $RETVAL -eq 0 ] && rm -f $LOCK_FILE
+}
+ 
+case "$1" in
+        start)
+                do_start
+                ;;
+        stop)
+                do_stop
+                ;;
+        restart)
+                do_stop
+                do_start
+                ;;
+        *)
+                echo "Usage: $0 {start|stop|restart}"
+                RETVAL=1
+esac
+
+exit $RETVAL
